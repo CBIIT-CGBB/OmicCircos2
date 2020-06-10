@@ -1,0 +1,1056 @@
+%\VignetteIndexEntry{OmicCircos vignette}
+%\VignetteKeywords{visualization, circular plot} 
+%\VignettePackage{OmicCircos}
+
+%
+% NOTE -- ONLY EDIT THE .Rtex FILE!!!  The .Rtex file is
+% likely to be overwritten.
+%
+
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc} 
+
+\usepackage{color}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage[width=.85\textwidth,font=small,labelfont=bf]{caption}
+\usepackage{subfig}
+\usepackage[T1]{fontenc} 
+\usepackage[american]{babel} 
+
+\usepackage{graphicx} 
+\usepackage{fancyvrb} 
+\usepackage{listings} 
+
+\textwidth=6.5in
+\textheight=8.5in
+\oddsidemargin=-.1in
+\evensidemargin=-.1in
+\headheight=-.3in
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+
+\newcommand{\R}{{\textsf{R}}}
+\newcommand{\code}[1]{{\texttt{#1}}}
+\newcommand{\term}[1]{{\emph{#1}}}
+\newcommand{\Rpackage}[1]{\textsf{#1}}
+\newcommand{\Rfunction}[1]{\texttt{#1}}
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+\newcommand{\Rfunarg}[1]{{\textit{#1}}}
+
+\bibliographystyle{unsrt} % built-in. maintains citation order
+%\bibliographystyle{plainnat} % works
+%\bibliographystyle{nature}
+%\bibliographystyle{biblatex-nature}
+%\bibliographystyle{science}
+%\bibliographystyle{biblatex-science}
+%\bibliographystyle{pnas2009} % works
+%\bibliographystyle{naturemag}
+
+\begin{document}
+\SweaveOpts{eps=FALSE, pdf=FALSE, png=FALSE, jpeg=TRUE, keep.source=FALSE}
+\SweaveOpts{concordance=TRUE}
+
+\lstset{% setup listings 
+        language=R,% set programming language 
+        %backgroundcolor=\color{grey},% background color
+        basicstyle=\small,% basic font style 
+        keywordstyle=\bfseries,% keyword style 
+        commentstyle=\ttfamily\itshape,% comment style 
+        numbers=left,% display line numbers on the left side 
+        numberstyle=\scriptsize,% use small line numbers 
+        numbersep=8pt,% space between line numbers and code 
+        tabsize=2,% sizes of tabs 
+        frame=single,           % adds a frame around the code
+        showstringspaces=false,% do not replace spaces in strings by a certain character 
+        captionpos=b,% positioning of the caption below 
+        breaklines=true,% automatic line breaking 
+        escapeinside={(*}{*)},% escaping to LaTeX 
+        fancyvrb=true,% verbatim code is typset by listings 
+        extendedchars=false,% prohibit extended chars (chars of codes 128--255) 
+        literate={"}{{\texttt{"}}}1{<-}{{$\leftarrow$}}1{<<-}{{$\twoheadleftarrow$}}1 
+        {~}{{$\sim$}}1{<=}{{$\le$}}1{>=}{{$\ge$}}1{!=}{{$\neq$}}1{^}{{$^\wedge$}}1,% item to replace, text, length of chars 
+        alsoletter={.<-},% becomes a letter 
+        alsoother={$},% becomes other 
+        otherkeywords={!=, ~, $, *, \&, \%/\%, \%*\%, \%\%, <-, <<-, /},% other keywords 
+        deletekeywords={c}% remove keywords 
+} 
+
+\title{The OmicCircos usages by examples}
+\author{Ying Hu and Chunhua Yan}
+
+\date{\today}
+
+\maketitle
+
+\tableofcontents
+
+\clearpage
+
+\section{Introduction}
+The OmicCircos package generates high-quality circular plots for visualizing variations 
+in omics data. The data can be gene or chromosome position-based values from mutation, 
+copy number, expression, and methylation analyses. This package is capable of displaying 
+variations in scatterplots, lines, and text labels. The relationships between genomic 
+features can be presented in the forms of polygons and curves. By utilizing the statistical and graphic 
+functions in R/Bioconductor environment, OmicCircos is also able to draw boxplots, histograms, 
+and heatmaps from multiple sample data. Each track is drawn independently, which allows the 
+use to optimize the track quickly and easily.
+
+In this vignette, we will introduce the package plotting functions using simulation data 
+and TCGA gene expression and copy number variation (cnv) data (http://www.cancergenome.nih.gov/). 
+
+A quick way to load the vignette examples is:
+\begin{lstlisting} 
+vignette("OmicCircos")
+\end{lstlisting} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\clearpage
+\section{Input file formats}
+Four input data files are used in the package: segment data, mapping data, link data and 
+link polygon data. Segment data are required to draw the anchor circular track. The remaining three data sets are used to draw additional tracks or connections.   
+
+\subsection{segment data}
+The \texttt{segment data} lay out the foundation of a circular graph and typically are 
+used to draw the outmost anchor track. In the segment data, column 1 should be the segment or chromosome names. 
+Columns 2 and 3 are the start and end positions of the segment. Columns 4 and 5 are optional 
+which can contain additional description of the segment. The package comes with the segment 
+data for human (hg18 and hg19) and mouse (mm9 and mm10). Let’s start by loading the package
+
+\begin{lstlisting} 
+options(stringsAsFactors = FALSE);
+library(OmicCircos); 
+## input hg19 cytogenetic band data
+data(UCSC.hg19.chr);
+head(UCSC.hg19.chr);
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos); 
+## input hg19 cytogenetic band data
+data(UCSC.hg19.chr);
+head(UCSC.hg19.chr);
+@
+
+\subsection{mapping data}
+The \texttt{mapping data} are an R data frame which includes values to be drawn in 
+the graph. In the mapping data, columns 1 and 2 are segment name and position respectively. Column 3 
+and beyond is optional which can be the value or name. In the following example, 
+the third column is the gene symbol. Column 4 and 5 are the gene expression values 
+for each sample. 
+
+\begin{lstlisting} 
+options(stringsAsFactors = FALSE);
+# load the OmicCircos-package
+library(OmicCircos); 
+## TCGA gene expression data
+data(TCGA.BC.gene.exp.2k.60);
+head(TCGA.BC.gene.exp.2k.60[,c(1:5)]);
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos); 
+## TCGA gene expression data
+data(TCGA.BC.gene.exp.2k.60);
+head(TCGA.BC.gene.exp.2k.60[,c(1:5)]);
+@
+
+\subsection{link data}
+The \texttt{link data} are for drawing curves between two anchor points. In the link data, 
+columns 1, 2, 3 are the segment name, position, label of the first anchor point; 
+columns 4, 5, 6 are segment name, position, label of the second anchor point   
+Column 7 is optional and could be used for the link type description.
+
+\begin{lstlisting} 
+options(stringsAsFactors = FALSE);
+# load the OmicCircos-package
+library(OmicCircos); 
+## TCGA fusion gene data
+data(TCGA.BC.fus);
+head(TCGA.BC.fus[,c(1:6)]);
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos); 
+## TCGA fusion gene data
+data(TCGA.BC.fus);
+head(TCGA.BC.fus[,c(1:6)]);
+@
+
+\subsection{link polygon data}
+The \texttt{link polygon data} are for connecting two segments with a polygon graph. 
+In the link polygon data, columns 1, 2 and 3 are the name, start and end points for the first segment and columns 4, 5 
+and 6 are the name, start and end points for the second segment.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\clearpage
+\section{The package functions}
+There are three main functions in the package: \texttt{sim.circos}, \texttt{segAnglePo} 
+and \texttt{circos}. \texttt{sim.circos} generates simulation data for drawing circular 
+plots. \texttt{segAnglePo} converts the genomic (linear) coordinates (chromosome base pair positions) 
+to the angle based coordinates along circumference. circos enables users to superimpose graphics on the circle track.
+
+\subsection{sim.circos}
+The \texttt{sim.circos} function generates four simutatedinput data files, which allows 
+users to preview the graph quickly with different parameters and design an optimal 
+presentation with desired features. In the following example, there are 10 segments, 
+10 individuals, 10 links, and 10 link polygons. Each segment has the value ranging 
+from 20 to 50. The values will be generated by rnorm(1) + i. The i is the ordinal 
+number of the segments. The values are increased by the segment order.
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 10;
+sim.out     <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, link.pg=link.pg.num);
+@
+
+\begin{lstlisting} 
+options(stringsAsFactors = FALSE);
+# load the OmicCircos-package
+library(OmicCircos);
+# set up the initial parameters
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 10;
+# run sim.circos function
+sim.out     <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, link.pg=link.pg.num);
+# display the data set names
+names(sim.out)
+# display the segment data
+head(sim.out$seg.frame[,c(1:3)])
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+head(sim.out$seg.frame[,c(1:3)])
+@
+
+\begin{lstlisting} 
+# display the mapping data
+head(sim.out$seg.mapping[,c(1:5)])
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+head(sim.out$seg.mapping[,c(1:5)])
+@
+
+\begin{lstlisting} 
+# display the linking data
+head(sim.out$seg.link)
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+head(sim.out$seg.link)
+@
+
+\begin{lstlisting} 
+# display the linking polygon data
+head(sim.out$seg.link.pg)
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+head(sim.out$seg.link.pg)
+@
+
+\subsection{segAnglePo}
+The \texttt{segAnglePo} function converts the segment pointer positions (linear coordinates) 
+into angle values (the angle based coordinates along circumference) and returns a data frame. 
+It specifies the circle size, number of segments, and segment length.
+
+\begin{lstlisting} 
+library(OmicCircos);
+options(stringsAsFactors = FALSE);
+set.seed(1234);
+## initial values for simulation data 
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+## output simulation data
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+## select segments
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+library(OmicCircos);
+options(stringsAsFactors = FALSE);
+set.seed(1234);
+## initial values for simulation data 
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+## output simulation data
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+## select segments
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+db[,2]   <- round(as.numeric(db[,2]), 3);
+db[,3]   <- round(as.numeric(db[,3]), 3);
+db
+@
+
+In the above example, there are 10 segments in a circle. Column 1 is segment name. 
+Columns 2, 3 are the start and end angles of the segment. Column 4 and 5 are the 
+accumulative start and end positions. Column 6 and 7 are the start and end position 
+for the segment. The plotting is clockwise starting at 12 o’clock (270 degree).
+
+\subsection{circos}
+The \texttt{circos} is the main function to draw different shapes of the circle. For 
+example, expression and CNV data can be viewed using basic shapes like scatterplots 
+and lines while structural variations such as translocations and fusion proteins can 
+be viewed using curves and polygons to connect different segments. Additionally, multiple 
+sample expression and CNV data sets can be displayed as boxplots, histograms, or heatmaps 
+using standard R functions such as apply. The usage of this function is illustrated in 
+the next section.  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\clearpage
+\section{Plotting parameters}
+\subsection{basic plotting}
+
+The input data sets were generated by texttt{sim.circos} function.
+
+\begin{lstlisting} 
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+options(stringsAsFactors = FALSE);
+set.seed(1234);
+
+# initial
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+
+# name segment (option)
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+# set transparent colors
+colors   <- rainbow(seg.num, alpha=0.5);
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+set.seed(1234);
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+colors   <- rainbow(seg.num, alpha=0.5);
+@
+
+To get perfect circle, the output figure should be in square. The output file is 
+the same width and height. The same line values are in the margin of the graphical 
+parameters. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%fig 1
+\begin{lstlisting} 
+par(mar=c(2, 2, 2, 2));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+
+circos(R=400, cir=db, type="chr",  col=colors, print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=360, cir=db, W=40, mapping=seg.v, col.v=3, type="l",   B=TRUE, col=colors[1], lwd=2, scale=TRUE);
+circos(R=320, cir=db, W=40, mapping=seg.v, col.v=3, type="ls",  B=FALSE, col=colors[9], lwd=2, scale=TRUE);
+circos(R=280, cir=db, W=40, mapping=seg.v, col.v=3, type="lh",  B=TRUE, col=colors[7], lwd=2, scale=TRUE);
+circos(R=240, cir=db, W=40, mapping=seg.v, col.v=19, type="ml",  B=FALSE, col=colors, lwd=2, scale=TRUE);
+circos(R=200, cir=db, W=40, mapping=seg.v, col.v=19, type="ml2", B=TRUE, col=colors, lwd=2);
+circos(R=160, cir=db, W=40, mapping=seg.v, col.v=19, type="ml3", B=FALSE, cutoff=5, lwd=2);
+circos(R=150, cir=db, W=40, mapping=link.v, type="link", lwd=2, col=colors[c(1,7)]);
+circos(R=150, cir=db, W=40, mapping=link.pg.v, type="link.pg", lwd=2, col=sample(colors,link.pg.num));
+\end{lstlisting} 
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[htbp]
+\begin{center}
+<<OmicCircos4vignette1, fig=TRUE, echo=FALSE, width=8, height=8>>=
+par(mar=c(0, 0, 0, 0));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+circos(R=400, cir=db, type="chr",  col=colors, print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=360, cir=db, W=40, mapping=seg.v, col.v=3, type="l",   B=TRUE, col=colors[1], lwd=2, scale=TRUE);
+circos(R=320, cir=db, W=40, mapping=seg.v, col.v=3, type="ls",  B=FALSE, col=colors[9], lwd=2, scale=TRUE);
+circos(R=280, cir=db, W=40, mapping=seg.v, col.v=3, type="lh",  B=TRUE, col=colors[7], lwd=2, scale=TRUE);
+circos(R=240, cir=db, W=40, mapping=seg.v, col.v=19, type="ml",  B=FALSE, col=colors, lwd=2, scale=TRUE);
+circos(R=200, cir=db, W=40, mapping=seg.v, col.v=19, type="ml2", B=TRUE, col=colors, lwd=2);
+circos(R=160, cir=db, W=40, mapping=seg.v, col.v=19, type="ml3", B=FALSE, cutoff=5, lwd=2);
+circos(R=150, cir=db, W=40, mapping=link.v, type="link", lwd=2, col=colors[c(1,7)]);
+circos(R=150, cir=db, W=40, mapping=link.pg.v, type="link.pg", lwd=2, col=sample(colors,link.pg.num));
+@
+
+\end{center}
+\captionsetup{width=1\textwidth}
+\caption{}
+\label{fig:OmicCircos4vignette1}
+\end{figure}
+
+Figure 1 from outside to inside: Track is lines; Track 2 is the stair steps;
+Track 3 is the horizontal lines; Tracks 4, 5 and 6 are the multiple lines, stair steps and 
+horizontal lines for multiple the samples.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%fig 2
+
+\begin{lstlisting} 
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+set.seed(1234);
+
+## initial values for simulation data 
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+## output simulation data
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+
+## select segments
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+
+colors   <- rainbow(seg.num, alpha=0.5);
+\end{lstlisting} 
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+set.seed(1234);
+
+## initial values for simulation data 
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+## output simulation data
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+
+## select segments
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+
+colors   <- rainbow(seg.num, alpha=0.5);
+@
+
+\begin{lstlisting} 
+par(mar=c(2, 2, 2, 2));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+
+circos(R=400, type="chr", cir=db, col=colors, print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=360, cir=db, W=40, mapping=seg.v, col.v=8, type="box",   B=TRUE, col=colors[1], lwd=0.1, scale=TRUE);
+circos(R=320, cir=db, W=40, mapping=seg.v, col.v=8, type="hist",  B=TRUE, col=colors[3], lwd=0.1, scale=TRUE);
+circos(R=280, cir=db, W=40, mapping=seg.v, col.v=8, type="ms",  B=TRUE, col=colors[7], lwd=0.1, scale=TRUE);
+circos(R=240, cir=db, W=40, mapping=seg.v, col.v=3, type="h",  B=FALSE,  col=colors[2], lwd=0.1);
+circos(R=200, cir=db, W=40, mapping=seg.v, col.v=3, type="s", B=TRUE, col=colors, lwd=0.1);
+circos(R=160, cir=db, W=40, mapping=seg.v, col.v=3, type="b", B=FALSE, col=colors, lwd=0.1);
+circos(R=150, cir=db, W=40, mapping=link.v, type="link", lwd=2, col=colors[c(1,7)]);
+circos(R=150, cir=db, W=40, mapping=link.pg.v, type="link.pg", lwd=2, col=sample(colors,link.pg.num));
+\end{lstlisting} 
+
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[htbp]
+\begin{center}
+<<OmicCircos4vignette2, echo=FALSE, fig=TRUE, width=8, height=8>>=
+par(mar=c(0, 0, 0, 0));
+
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+
+circos(R=400, type="chr", cir=db, col=colors, print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=360, cir=db, W=40, mapping=seg.v, col.v=8, type="box",   B=TRUE, col=colors[1], lwd=0.1, scale=TRUE);
+circos(R=320, cir=db, W=40, mapping=seg.v, col.v=8, type="hist",  B=TRUE, col=colors[3], lwd=0.1, scale=TRUE);
+circos(R=280, cir=db, W=40, mapping=seg.v, col.v=8, type="ms",  B=TRUE, col=colors[7], lwd=0.1, scale=TRUE);
+circos(R=240, cir=db, W=40, mapping=seg.v, col.v=3, type="h",  B=FALSE,  col=colors[2], lwd=0.1);
+circos(R=200, cir=db, W=40, mapping=seg.v, col.v=3, type="s", B=TRUE, col=colors, lwd=0.1);
+circos(R=160, cir=db, W=40, mapping=seg.v, col.v=3, type="b", B=FALSE, col=colors, lwd=0.1);
+circos(R=150, cir=db, W=40, mapping=link.v, type="link", lwd=2, col=colors[c(1,7)]);
+circos(R=150, cir=db, W=40, mapping=link.pg.v, type="link.pg", lwd=2, col=sample(colors,link.pg.num));
+@
+\end{center}
+\captionsetup{width=1\textwidth}
+\caption{}
+\label{fig:OmicCircos4vignette2}
+\end{figure}
+
+Figure 2  from outside to inside: Track 1 is the boxplot for the samples from column 8 (col.v=8) to the last column in the data frame seg.v with the scale; Track 2 and track 3 are the histograms (in horizontal) and the scatter plots for multiple samples as track 1. Tracks 4, 5 and 6 are the histogram (in vertical), scatter plot and vertical line for just one sample (column 3 in the data frame seg.v).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%fig 3
+
+\begin{lstlisting}
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+set.seed(1234);
+
+## initial values for simulation data 
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+## output simulation data
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+
+## 
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+
+colors   <- rainbow(seg.num, alpha=0.5);
+\end{lstlisting}
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+set.seed(1234);
+## initial values for simulation data 
+seg.num     <- 10;
+ind.num     <- 20;
+seg.po      <- c(20:50);
+link.num    <- 10;
+link.pg.num <- 4;
+## output simulation data
+sim.out <- sim.circos(seg=seg.num, po=seg.po, ind=ind.num, link=link.num, 
+  link.pg=link.pg.num);
+seg.f     <- sim.out$seg.frame;
+seg.v     <- sim.out$seg.mapping;
+link.v    <- sim.out$seg.link
+link.pg.v <- sim.out$seg.link.pg
+seg.num   <- length(unique(seg.f[,1]));
+seg.name <- paste("chr", 1:seg.num, sep="");
+db       <- segAnglePo(seg.f, seg=seg.name);
+colors   <- rainbow(seg.num, alpha=0.5);
+@
+
+\begin{lstlisting}
+par(mar=c(2, 2, 2, 2));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+
+circos(R=400, type="chr", cir=db, col=colors, print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=360, cir=db, W=40, mapping=seg.v, col.v=8, type="quant90", B=FALSE, col=colors, lwd=2, scale=TRUE);
+circos(R=320, cir=db, W=40, mapping=seg.v, col.v=3, type="sv", B=TRUE, col=colors[7],  scale=TRUE);
+circos(R=280, cir=db, W=40, mapping=seg.v, col.v=3, type="ss", B=FALSE, col=colors[3],  scale=TRUE);
+circos(R=240, cir=db, W=40, mapping=seg.v, col.v=8, type="heatmap", lwd=3);
+circos(R=200, cir=db, W=40, mapping=seg.v, col.v=3, type="s.sd", B=FALSE, col=colors[4]);
+circos(R=160, cir=db, W=40, mapping=seg.v, col.v=3, type="ci95", B=TRUE, col=colors[4], lwd=2);
+circos(R=150, cir=db, W=40, mapping=link.v, type="link", lwd=2, col=colors[c(1,7)]);
+circos(R=150, cir=db, W=40, mapping=link.pg.v, type="link.pg", lwd=2, col=sample(colors,link.pg.num));
+
+the.col1=rainbow(10, alpha=0.5)[3];
+highlight <- c(160, 410, 6, 2, 6, 10, the.col1, the.col1);
+circos(R=110, cir=db, W=40, mapping=highlight, type="hl", lwd=1);
+
+the.col1=rainbow(10, alpha=0.1)[3];
+the.col2=rainbow(10, alpha=0.5)[1];
+highlight <- c(160, 410, 3, 12, 3, 20, the.col1, the.col2);
+circos(R=110, cir=db, W=40, mapping=highlight, type="hl", lwd=2);
+\end{lstlisting}
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[htbp]
+\begin{center}
+<<OmicCircos4vignette3, echo=FALSE, fig=TRUE, width=8, height=8>>=
+par(mar=c(0, 0, 0, 0));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+
+circos(R=400, type="chr", cir=db, col=colors, print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=360, cir=db, W=40, mapping=seg.v, col.v=8, type="quant90", B=FALSE, col=colors, lwd=2, scale=TRUE);
+circos(R=320, cir=db, W=40, mapping=seg.v, col.v=3, type="sv", B=TRUE, col=colors[7],  scale=TRUE);
+circos(R=280, cir=db, W=40, mapping=seg.v, col.v=3, type="ss", B=FALSE, col=colors[3],  scale=TRUE);
+circos(R=240, cir=db, W=40, mapping=seg.v, col.v=20, type="heatmap", lwd=3);
+circos(R=200, cir=db, W=40, mapping=seg.v, col.v=3, type="s.sd", B=FALSE, col=colors[4]);
+circos(R=160, cir=db, W=40, mapping=seg.v, col.v=3, type="ci95", B=TRUE, col=colors[4], lwd=2);
+circos(R=150, cir=db, W=40, mapping=link.v, type="link", lwd=2, col=colors[c(1,7)]);
+circos(R=150, cir=db, W=40, mapping=link.pg.v, type="link.pg", lwd=2, col=sample(colors,link.pg.num));
+
+the.col1=rainbow(10, alpha=0.5)[3];
+highlight <- c(160, 410, 6, 2, 6, 10, the.col1, the.col1);
+circos(R=110, cir=db, W=40, mapping=highlight, type="hl", lwd=1);
+
+the.col1=rainbow(10, alpha=0.1)[3];
+the.col2=rainbow(10, alpha=0.5)[1];
+highlight <- c(160, 410, 3, 12, 3, 20, the.col1, the.col2);
+circos(R=110, cir=db, W=40, mapping=highlight, type="hl", lwd=2);
+
+@
+\end{center}
+\captionsetup{width=1\textwidth}
+\caption{}
+\label{fig:OmicCircos4vignette3}
+\end{figure}
+
+Figure 3 from outside to inside: Track 1 is the three lines for quantile values for the 
+samples from column 8 (col.v=8) to the last column in the data frame seg.v with the scale. The middle line is for 
+the median, the outside line and the inside line are for 90\% and the 10\%, respectively; Track 
+2 is the circle points with the center=median and radium=variance; Track 3 is the circle plot 
+with the center equal to the mean and scaled value (for example, the range from 0 to 3);  
+Tracks 4 is the heatmap for the samples from column 8 (col.v=8) to the last column in the data frame seg.v; Track 5 is the circle plot with the center=median and radius=standard deviation; Track 6 is the 95\% confidence interval of the samples.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%fig 4
+\subsection{annotation}
+
+\begin{lstlisting}
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+set.seed(1234);
+
+## load mm cytogenetic band data
+data("UCSC.mm10.chr", package="OmicCircos");
+ref     <- UCSC.mm10.chr;
+ref[,1] <- gsub("chr", "", ref[,1]);
+## initial values for simulation data 
+colors <- rainbow(10, alpha=0.8);
+lab.n  <- 50;
+cnv.n  <- 200;
+arc.n  <- 30;
+fus.n  <- 10;
+
+## make arc data
+arc.d <- c();
+for (i in 1:arc.n){
+  chr     <- sample(1:19, 1);
+  chr.i   <- which(ref[,1]==chr);
+  chr.arc <- ref[chr.i,];
+  arc.i   <- sample(1:nrow(chr.arc), 2);
+  arc.d   <- rbind(arc.d, c(chr.arc[arc.i[1],c(1,2)], chr.arc[arc.i[2],c(2,4)]));
+}
+colnames(arc.d) <- c("chr", "start", "end", "value");
+
+## make fusion
+fus.d <- c();
+for (i in 1:fus.n){
+  chr1    <- sample(1:19, 1);
+  chr2    <- sample(1:19, 1);
+  chr1.i  <- which(ref[,1]==chr1);
+  chr2.i  <- which(ref[,1]==chr2);
+  chr1.f  <- ref[chr1.i,];
+  chr2.f  <- ref[chr2.i,];
+  fus1.i  <- sample(1:nrow(chr1.f), 1);
+  fus2.i  <- sample(1:nrow(chr2.f), 1);
+  n1      <- paste0("geneA", i);
+  n2      <- paste0("geneB", i);
+  fus.d   <- rbind(fus.d, c(chr1.f[fus1.i,c(1,2)], n1, chr2.f[fus2.i,c(1,2)], n2));
+}
+colnames(fus.d) <- c("chr1", "po1", "gene1", "chr2", "po2", "gene2");
+
+cnv.i <- sample(1:nrow(ref), cnv.n);
+vale  <- rnorm(cnv.n);
+cnv.d <- data.frame(ref[cnv.i,c(1,2)], value=vale);
+
+\end{lstlisting}
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+set.seed(1234);
+
+data("UCSC.mm10.chr", package="OmicCircos");
+ref     <- UCSC.mm10.chr;
+ref[,1] <- gsub("chr", "", ref[,1]);
+
+colors <- rainbow(10, alpha=0.8);
+lab.n  <- 50;
+cnv.n  <- 200;
+arc.n  <- 30;
+fus.n  <- 10;
+
+## make arc data
+arc.d <- c();
+for (i in 1:arc.n){
+  chr     <- sample(1:19, 1);
+  chr.i   <- which(ref[,1]==chr);
+  chr.arc <- ref[chr.i,];
+  arc.i   <- sample(1:nrow(chr.arc), 2);
+  arc.d   <- rbind(arc.d, c(chr.arc[arc.i[1],c(1,2)], chr.arc[arc.i[2],c(2,4)]));
+}
+colnames(arc.d) <- c("chr", "start", "end", "value");
+
+## make fusion
+fus.d <- c();
+for (i in 1:fus.n){
+  chr1    <- sample(1:19, 1);
+  chr2    <- sample(1:19, 1);
+  chr1.i  <- which(ref[,1]==chr1);
+  chr2.i  <- which(ref[,1]==chr2);
+  chr1.f  <- ref[chr1.i,];
+  chr2.f  <- ref[chr2.i,];
+  fus1.i  <- sample(1:nrow(chr1.f), 1);
+  fus2.i  <- sample(1:nrow(chr2.f), 1);
+  n1      <- paste0("geneA", i);
+  n2      <- paste0("geneB", i);
+  fus.d   <- rbind(fus.d, c(chr1.f[fus1.i,c(1,2)], n1, chr2.f[fus2.i,c(1,2)], n2));
+}
+colnames(fus.d) <- c("chr1", "po1", "gene1", "chr2", "po2", "gene2");
+
+cnv.i <- sample(1:nrow(ref), cnv.n);
+vale  <- rnorm(cnv.n);
+cnv.d <- data.frame(ref[cnv.i,c(1,2)], value=vale);
+
+@
+
+\begin{lstlisting}
+par(mar=c(2, 2, 2, 2));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
+
+circos(R=400, type="chr", cir="mm10", print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=340, cir="mm10", W=60, mapping=cnv.d, type="b3", B=TRUE, col=colors[7]);
+circos(R=340, cir="mm10", W=60, mapping=cnv.d, type="s2", B=FALSE, col=colors[1], cex=0.5);
+circos(R=280, cir="mm10", W=60, mapping=arc.d, type="arc2", B=FALSE, col=colors, lwd=10, cutoff=0);
+circos(R=220, cir="mm10", W=60, mapping=cnv.d, col.v=3, type="b2", B=TRUE, cutoff=-0.2, col=colors[c(7,9)], lwd=2);
+circos(R=160, cir="mm10", W=60, mapping=arc.d, col.v=4, type="arc",  B=FALSE, col=colors[c(1,7)], lwd=4, scale=TRUE);
+circos(R=150, cir="mm10", W=10, mapping=fus.d, type="link",  lwd=2, col=colors[c(1,7,9)]);
+
+\end{lstlisting}
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[htbp]
+\begin{center}
+<<OmicCircos4vignette4, echo=FALSE, fig=TRUE, width=8, height=8>>=
+par(mar=c(0, 0, 0, 0));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
+
+circos(R=400, type="chr", cir="mm10", print.chr.lab=TRUE, W=4, scale=TRUE);
+circos(R=340, cir="mm10", W=60, mapping=cnv.d, type="b3", B=TRUE, col=colors[7]);
+circos(R=340, cir="mm10", W=60, mapping=cnv.d, type="s2", B=FALSE, col=colors[1], cex=0.5);
+circos(R=280, cir="mm10", W=60, mapping=arc.d, type="arc2", B=FALSE, col=colors, lwd=10, cutoff=0);
+circos(R=220, cir="mm10", W=60, mapping=cnv.d, col.v=3, type="b2", B=TRUE, cutoff=-0.2, col=colors[c(7,9)], lwd=2);
+circos(R=160, cir="mm10", W=60, mapping=arc.d, col.v=4, type="arc",  B=FALSE, col=colors[c(1,7)], lwd=4, scale=TRUE);
+circos(R=150, cir="mm10", W=10, mapping=fus.d, type="link",  lwd=2, col=colors[c(1,7,9)]);
+
+@
+\end{center}
+\captionsetup{width=1\textwidth}
+\caption{}
+\label{fig:OmicCircos4vignette4}
+\end{figure}
+
+%\clearpage
+\subsection{label}
+
+Figure 4 from outside to inside: Track 1 is the vertical lines with the same length and radius which can be used for the annotation of SNP positions; Track 2 is
+the arcs with the same radius which can be used for the segment annotation, e.g. cnv (
+copy number variation); Track 3 is the barplot with positive and negative values; 
+Track 4 is the arcs in the different radius. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%fig 5 (vignette5.1)
+
+\begin{lstlisting}
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+
+data("TCGA.PAM50_genefu_hg18");
+data("TCGA.BC.fus");
+data("TCGA.BC.cnv.2k.60");
+data("TCGA.BC.gene.exp.2k.60");
+data("TCGA.BC.sample60");
+data("TCGA.BC_Her2_cnv_exp");
+
+pvalue <- -1 * log10(TCGA.BC_Her2_cnv_exp[,5]);
+pvalue <- cbind(TCGA.BC_Her2_cnv_exp[,c(1:3)], pvalue);
+
+Her2.i <- which(TCGA.BC.sample60[,2] == "Her2");
+Her2.n <- TCGA.BC.sample60[Her2.i,1];
+
+Her2.j <- which(colnames(TCGA.BC.cnv.2k.60) %in% Her2.n);
+cnv    <- TCGA.BC.cnv.2k.60[,c(1:3,Her2.j)]; 
+cnv.m  <- cnv[,c(4:ncol(cnv))];
+cnv.m[cnv.m >  2] <- 2;
+cnv.m[cnv.m < -2] <- -2;
+cnv <- cbind(cnv[,1:3], cnv.m);
+
+Her2.j   <- which(colnames(TCGA.BC.gene.exp.2k.60) %in% Her2.n);
+gene.exp <- TCGA.BC.gene.exp.2k.60[,c(1:3,Her2.j)]; 
+colors <- rainbow(10, alpha=0.5);
+\end{lstlisting}
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+
+data("TCGA.PAM50_genefu_hg18");
+data("TCGA.BC.fus");
+data("TCGA.BC.cnv.2k.60");
+data("TCGA.BC.gene.exp.2k.60");
+data("TCGA.BC.sample60");
+data("TCGA.BC_Her2_cnv_exp");
+
+pvalue <- -1 * log10(TCGA.BC_Her2_cnv_exp[,5]);
+pvalue <- cbind(TCGA.BC_Her2_cnv_exp[,c(1:3)], pvalue);
+
+Her2.i <- which(TCGA.BC.sample60[,2] == "Her2");
+Her2.n <- TCGA.BC.sample60[Her2.i,1];
+
+Her2.j <- which(colnames(TCGA.BC.cnv.2k.60) %in% Her2.n);
+cnv    <- TCGA.BC.cnv.2k.60[,c(1:3,Her2.j)]; 
+cnv.m  <- cnv[,c(4:ncol(cnv))];
+cnv.m[cnv.m >  2] <- 2;
+cnv.m[cnv.m < -2] <- -2;
+cnv <- cbind(cnv[,1:3], cnv.m);
+
+Her2.j   <- which(colnames(TCGA.BC.gene.exp.2k.60) %in% Her2.n);
+gene.exp <- TCGA.BC.gene.exp.2k.60[,c(1:3,Her2.j)]; 
+colors <- rainbow(10, alpha=0.5);
+@
+
+\begin{lstlisting}
+par(mar=c(2, 2, 2, 2));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
+
+circos(R=300, type="chr", cir="hg18", print.chr.lab=FALSE, W=4);
+circos(R=310, cir="hg18", W=20, mapping=TCGA.PAM50_genefu_hg18, type="label", 
+       side="out", col=c("black", "blue","red"), cex=0.4);
+circos(R=250, cir="hg18", W=50, mapping=cnv, col.v=4, type="ml3", B=FALSE, col=colors[7], cutoff=0, scale=TRUE);
+circos(R=200, cir="hg18", W=50, mapping=gene.exp, col.v=4, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE);
+circos(R=140, cir="hg18", W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE);
+## set fusion gene colors
+cols  <- rep(colors[7], nrow(TCGA.BC.fus));
+col.i <- which(TCGA.BC.fus[,1]==TCGA.BC.fus[,4]);
+cols[col.i] <- colors[1];
+circos(R=132, cir="hg18", W=50, mapping=TCGA.BC.fus, type="link", col=cols, lwd=2);
+@
+\end{lstlisting}
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[htbp]
+\begin{center}
+<<OmicCircos4vignette5, echo=FALSE, fig=TRUE, width=8, height=8>>=
+par(mar=c(0, 0, 0, 0));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
+
+circos(R=300, type="chr", cir="hg18", print.chr.lab=FALSE, W=4);
+circos(R=310, cir="hg18", W=20, mapping=TCGA.PAM50_genefu_hg18, type="label", 
+       side="out", col=c("black", "blue","red"), cex=0.4);
+circos(R=250, cir="hg18", W=50, mapping=cnv, col.v=11, type="ml3", B=FALSE, col=colors[7], cutoff=0, scale=TRUE);
+circos(R=200, cir="hg18", W=50, mapping=gene.exp, col.v=11, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE);
+circos(R=140, cir="hg18", W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE);
+## set fusion gene colors
+cols  <- rep(colors[7], nrow(TCGA.BC.fus));
+col.i <- which(TCGA.BC.fus[,1]==TCGA.BC.fus[,4]);
+cols[col.i] <- colors[1];
+circos(R=132, cir="hg18", W=50, mapping=TCGA.BC.fus, type="link", col=cols, lwd=2);
+@
+\end{center}
+\captionsetup{width=1\textwidth}
+\caption{}
+\label{fig:OmicCircos4vignette5}
+\end{figure}
+
+Figure 5 is an example of adding outside labels.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%fig 6  (vignette5.2)
+
+\begin{lstlisting}
+par(mar=c(2, 2, 2, 2));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+circos(R=300, type="chr", cir="hg18", col=TRUE, print.chr.lab=FALSE, W=4);
+circos(R=290, cir="hg18", W=20, mapping=TCGA.PAM50_genefu_hg18, type="label", side="in", col=c("black", "blue"), cex=0.4);
+circos(R=310, cir="hg18", W=50, mapping=cnv, col.v=4, type="ml3", B=TRUE, col=colors[7], cutoff=0, scale=TRUE);
+circos(R=150, cir="hg18", W=50, mapping=gene.exp, col.v=4, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE);
+circos(R=90,  cir="hg18", W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE);
+circos(R=82, cir="hg18", W=50, mapping=TCGA.BC.fus, type="link", col=cols, lwd=2);
+@
+\end{lstlisting}
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[htbp]
+\begin{center}
+<<OmicCircos4vignette6, echo=FALSE, fig=TRUE, width=8, height=8>>=
+par(mar=c(0, 0, 0, 0));
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
+circos(R=300, type="chr", cir="hg18", col=TRUE, print.chr.lab=FALSE, W=4);
+circos(R=290, cir="hg18", W=20, mapping=TCGA.PAM50_genefu_hg18, type="label", side="in", col=c("black", "blue"), cex=0.4);
+circos(R=310, cir="hg18", W=50, mapping=cnv, col.v=11, type="ml3", B=TRUE, col=colors[7], cutoff=0, scale=TRUE);
+circos(R=150, cir="hg18", W=50, mapping=gene.exp, col.v=11, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE);
+circos(R=90,  cir="hg18", W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE);
+circos(R=82, cir="hg18", W=50, mapping=TCGA.BC.fus, type="link", col=cols, lwd=2);
+@
+\end{center}
+\captionsetup{width=1\textwidth}
+\caption{}
+\label{fig:OmicCircos4vignette6}
+\end{figure}
+
+Figure 6 is an example of the inside labels.
+%\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%fig 7  (vignette6)
+\subsection{heatmap}
+
+\begin{lstlisting}
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+
+data("TCGA.PAM50_genefu_hg18");
+data("TCGA.BC.fus");
+data("TCGA.BC.cnv.2k.60");
+data("TCGA.BC.gene.exp.2k.60");
+data("TCGA.BC.sample60");
+data("TCGA.BC_Her2_cnv_exp");
+
+pvalue <- -1 * log10(TCGA.BC_Her2_cnv_exp[,5]);
+pvalue <- cbind(TCGA.BC_Her2_cnv_exp[,c(1:3)], pvalue);
+
+Her2.i <- which(TCGA.BC.sample60[,2] == "Her2");
+Her2.n <- TCGA.BC.sample60[Her2.i,1];
+
+Her2.j <- which(colnames(TCGA.BC.cnv.2k.60) %in% Her2.n);
+cnv    <- TCGA.BC.cnv.2k.60[,c(1:3,Her2.j)]; 
+cnv.m  <- cnv[,c(4:ncol(cnv))];
+cnv.m[cnv.m >  2] <- 2;
+cnv.m[cnv.m < -2] <- -2;
+cnv <- cbind(cnv[,1:3], cnv.m);
+
+Her2.j   <- which(colnames(TCGA.BC.gene.exp.2k.60) %in% Her2.n);
+gene.exp <- TCGA.BC.gene.exp.2k.60[,c(1:3,Her2.j)]; 
+
+colors <- rainbow(10, alpha=0.5);
+\end{lstlisting}
+
+<<echo=FALSE>>=
+options(stringsAsFactors = FALSE);
+library(OmicCircos);
+
+data("TCGA.PAM50_genefu_hg18");
+data("TCGA.BC.fus");
+data("TCGA.BC.cnv.2k.60");
+data("TCGA.BC.gene.exp.2k.60");
+data("TCGA.BC.sample60");
+data("TCGA.BC_Her2_cnv_exp");
+
+pvalue <- -1 * log10(TCGA.BC_Her2_cnv_exp[,5]);
+pvalue <- cbind(TCGA.BC_Her2_cnv_exp[,c(1:3)], pvalue);
+
+Her2.i <- which(TCGA.BC.sample60[,2] == "Her2");
+Her2.n <- TCGA.BC.sample60[Her2.i,1];
+
+Her2.j <- which(colnames(TCGA.BC.cnv.2k.60) %in% Her2.n);
+cnv    <- TCGA.BC.cnv.2k.60[,c(1:3,Her2.j)]; 
+cnv.m  <- cnv[,c(4:ncol(cnv))];
+cnv.m[cnv.m >  2] <- 2;
+cnv.m[cnv.m < -2] <- -2;
+cnv <- cbind(cnv[,1:3], cnv.m);
+
+Her2.j   <- which(colnames(TCGA.BC.gene.exp.2k.60) %in% Her2.n);
+gene.exp <- TCGA.BC.gene.exp.2k.60[,c(1:3,Her2.j)]; 
+
+colors <- rainbow(10, alpha=0.5);
+@
+
+\begin{lstlisting}
+par(mar=c(2, 2, 2, 2));
+
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+
+circos(R=400, cir="hg18", W=4,   type="chr", print.chr.lab=TRUE, scale=TRUE);
+circos(R=300, cir="hg18", W=100, mapping=gene.exp,  col.v=4,  type="heatmap2", 
+       cluster=TRUE, col.bar=TRUE, lwd=0.1, col="blue");
+circos(R=220, cir="hg18", W=80,  mapping=cnv,   col.v=4,   type="ml3", B=FALSE, lwd=1, cutoff=0);
+circos(R=140, cir="hg18", W=80,  mapping=pvalue,  col.v=4,    type="l",   B=TRUE, lwd=1, col=colors[1]);
+
+cols        <- rep(colors[7], nrow(TCGA.BC.fus));
+col.i       <- which(TCGA.BC.fus[,1]==TCGA.BC.fus[,4]);
+cols[col.i] <- colors[1];
+circos(R=130, cir="hg18", W=10,  mapping=TCGA.BC.fus, type="link2", lwd=2, col=cols);
+
+@
+\end{lstlisting}
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[htbp]
+\begin{center}
+<<OmicCircos4vignette7, echo=FALSE, fig=TRUE, width=8, height=8>>=
+par(mar=c(0, 0, 0, 0));
+
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+
+circos(R=400, cir="hg18", W=4,   type="chr", print.chr.lab=TRUE, scale=TRUE);
+circos(R=300, cir="hg18", W=100, mapping=gene.exp,  col.v=8,  type="heatmap2", 
+       cluster=TRUE, col.bar=TRUE, lwd=0.1, col="blue");
+circos(R=220, cir="hg18", W=80,  mapping=cnv,   col.v=4,   type="ml3", B=FALSE, lwd=1, cutoff=0);
+circos(R=140, cir="hg18", W=80,  mapping=pvalue,  col.v=4,    type="l",   B=TRUE, lwd=1, col=colors[1]);
+
+cols        <- rep(colors[7], nrow(TCGA.BC.fus));
+col.i       <- which(TCGA.BC.fus[,1]==TCGA.BC.fus[,4]);
+cols[col.i] <- colors[1];
+circos(R=130, cir="hg18", W=10,  mapping=TCGA.BC.fus, type="link2", lwd=2, col=cols);
+
+@
+\end{center}
+\captionsetup{width=1\textwidth}
+\caption{}
+\label{fig:OmicCircos4vignette7}
+\end{figure}
+ 
+Figure 7: An example of a circular plots generated by OmicCircos showing the expression, CNV and fusion protein in 15 Her2 subtype samples from TCGA Breast Cancer data.
+Circular tracks from outside to inside: genome positions by chromosomes (black lines are cytobands); expression heatmap (red: up-regulated; blue: down-regulated); CNVs (red: gain; blue: loss); 
+correlation p values between expression and CNVs; fusion genes.
+
+\end{document}

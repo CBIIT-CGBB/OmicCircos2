@@ -1,0 +1,8 @@
+export (circos)
+export (segAnglePo)
+export (sim.circos)
+importFrom("grDevices", "colorRampPalette", "rainbow")
+importFrom("graphics", "lines", "points", "polygon", "rect",
+             "segments", "text")
+importFrom("stats", "dist", "end", "hclust", "median", "na.omit",
+             "quantile", "rnorm", "sd", "start", "t.test", "var")

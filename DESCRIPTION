@@ -6,7 +6,7 @@ Author: Ying Hu <yhu@mail.nih.gov> Chunhua Yan <yanch@mail.nih.gov>
 Maintainer: Ying Hu <yhu@mail.nih.gov>
 biocViews: Visualization,Statistics,Annotation
 Depends: R (>= 2.14.0)
-Description: OmicCircos is an R application and package for generating high-quality circular plots for omics data.
+Description: OmicCircos2 is an R application and package for generating high-quality circular plots for omics data.
 License: GPL-2
 Packaged: 2020-07-04 09:42:55 UTC; biocbuild
 NeedsCompilation: no

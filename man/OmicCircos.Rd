@@ -1,11 +1,11 @@
 %% main
-\name{OmicCircos-package}
-\alias{OmicCircos}
+\name{OmicCircos2-package}
+\alias{OmicCircos2}
 \title{
-OmicCircos package
+OmicCircos2 package
 }
 \description{
- OmicCircos is for generating high-quality circular plots for omics data.
+ OmicCircos2 is for generating high-quality circular plots for omics data.
 }
 \author{
 %%  ~~ possibly secondary sources and usages ~~

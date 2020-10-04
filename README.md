@@ -1,4 +1,4 @@
 # OmicCircos2
 
-library(devtools)
+library(devtools) 
 install_github("CBIIT-CGBB/OmicCircos2")

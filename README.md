@@ -1,4 +1,4 @@
-# OmicCircos
+# OmicCircos2
 
 library(devtools)
 

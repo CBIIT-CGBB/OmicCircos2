@@ -514,7 +514,8 @@ circos <- function (mapping=mapping, xc=400, yc=400, R=400, W=W,
           draw.line(xc, yc, w.to, my.Rm, v, col=col, lwd=lwd);
         } else {
           ## v     <- scale.v(my.v, my.R1, my.Rm, cutoff, dat.min);
-          v     <- scale.v(my.v, my.Rm, my.R1, dat.min, cutoff);
+          ## v     <- scale.v(my.v, my.Rm, my.R1, dat.min, cutoff);
+	  v     <- scale.v(my.v, my.R1, my.Rm, dat.min, cutoff);
           po    <- as.numeric(dat[i,2]);
           w.to  <- scale.v(po, v1, v2, v3, v4);
           draw.line(xc, yc, w.to, v, my.Rm, col=col, lwd=lwd);

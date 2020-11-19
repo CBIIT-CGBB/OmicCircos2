@@ -2626,9 +2626,9 @@ bez <- function(x, y, t)	{
 
 ###########################################
 # one value : from a to b 
-scale.v <- function(v, a, b, min.v=min(v), max.v=max(v) {
+scale.v <- function(v, a, b, min.v, max.v) {
   v <- v-min.v; 
-  v <- v/max.v; 
+  v <- v/(max.v-min.v); 
   v <- v*(b-a);  
   v+a
 }

@@ -35,7 +35,7 @@ TCGA.BC.fus[,4]   <- paste0("chr", TCGA.BC.fus[,4]);
 
 colors <- rainbow(10, alpha=0.5);
 
-pdffile  <- "OmicCircos4vignette4.pdf";
+pdffile  <- "OmicCircos4vignette4_2.pdf";
 pdf(pdffile, 8, 8);
 par(mar=c(2, 2, 2, 2));
 plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", xpd=1);
@@ -43,7 +43,7 @@ plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", xpd=1);
 #circos(R=385, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr.label.h", cex=1.3);
 circos(R=350, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr.scale", lwd=0.001, cex=0.3);
 circos(R=345, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr2", W=10)
-circos(R=380, cir=UCSC.hg18, W=20, mapping=TCGA.PAM50_genefu_hg18, type="label", side="out", col="black", cex=0.6);
+circos(R=380, cir=UCSC.hg18, W=20, mapping=TCGA.PAM50_genefu_hg18, type="label2", side="out", col="black", cex=0.6);
 circos(R=250, cir=UCSC.hg18, W=50, mapping=cnv, col.v=4, type="ml3", B=FALSE, col=colors[7], cutoff=0, scale=TRUE, cex=0.4);
 circos(R=200, cir=UCSC.hg18, W=50, mapping=gene.exp, col.v=4, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE, cex=0.4);
 circos(R=140, cir=UCSC.hg18, W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE, cex=0.4);
@@ -53,7 +53,7 @@ plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
 #circos(R=385, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr.label.h", cex=1.3);
 circos(R=350, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr.scale", lwd=0.001, cex=0.3);
 circos(R=345, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr2", W=10)
-circos(R=300, cir=UCSC.hg18, W=20, mapping=TCGA.PAM50_genefu_hg18, col.v=3, type="label", side="in", col="blue", cex=0.6);
+circos(R=300, cir=UCSC.hg18, W=20, mapping=TCGA.PAM50_genefu_hg18, col.v=3, type="label2", side="in", col="blue", cex=0.6);
 circos(R=310, cir=UCSC.hg18, W=50, mapping=cnv, col.v=4, type="ml3", B=TRUE, col=colors[7], cutoff=0, scale=TRUE, cex=0.4);
 circos(R=150, cir=UCSC.hg18, W=50, mapping=gene.exp, col.v=4, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE, cex=0.4);
 circos(R=90,  cir=UCSC.hg18, W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE, cex=0.4);

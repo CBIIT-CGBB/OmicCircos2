@@ -1,9 +1,8 @@
 rm(list=ls());
-
-library(OmicCircos);
 options(stringsAsFactors = FALSE);
-set.seed(1234);
+library(OmicCircos3);
 
+data(UCSC.hg18);
 data("TCGA.PAM50_genefu_hg18");
 data("TCGA.BC.fus");
 data("TCGA.BC.cnv.2k.60");
@@ -27,33 +26,27 @@ cnv <- cbind(cnv[,1:3], cnv.m);
 Her2.j   <- which(colnames(TCGA.BC.gene.exp.2k.60) %in% Her2.n);
 gene.exp <- TCGA.BC.gene.exp.2k.60[,c(1:3,Her2.j)]; 
 
-colors <- rainbow(10, alpha=0.5);
+cols <- rainbow(10, alpha=0.5);
+cnv[,1]      <- paste0("chr", cnv[,1]);
+gene.exp[,1] <- paste0("chr", gene.exp[,1]);
+pvalue[,1]   <- paste0("chr", pvalue[,1]);
+TCGA.BC.fus[,1]   <- paste0("chr", TCGA.BC.fus[,1]);
+TCGA.BC.fus[,4]   <- paste0("chr", TCGA.BC.fus[,4]);
 
-pdffile  <- "OmicCircos4vignette5.pdf";
-pdf(pdffile, 8, 8);
+pdf("OmicCircos4vignette5.pdf", 8,8);
 par(mar=c(2, 2, 2, 2));
-plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
 
-circos(R=300, type="chr", cir="hg18", print.chr.lab=FALSE, W=4);
-circos(R=310, cir="hg18", W=20, mapping=TCGA.PAM50_genefu_hg18, type="label", 
-       side="out", col=c("black", "blue","red"), cex=0.4);
-circos(R=250, cir="hg18", W=50, mapping=cnv, col.v=4, type="ml3", B=FALSE, col=colors[7], cutoff=0, scale=TRUE);
-circos(R=200, cir="hg18", W=50, mapping=gene.exp, col.v=4, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE);
-circos(R=140, cir="hg18", W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE);
-## set fusion gene colors
-cols  <- rep(colors[7], nrow(TCGA.BC.fus));
-col.i <- which(TCGA.BC.fus[,1]==TCGA.BC.fus[,4]);
-cols[col.i] <- colors[1];
-circos(R=132, cir="hg18", W=50, mapping=TCGA.BC.fus, type="link", col=cols, lwd=2);
+plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
 
-plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="");
-circos(R=300, type="chr", cir="hg18", col=TRUE, print.chr.lab=FALSE, W=4);
-circos(R=290, cir="hg18", W=20, mapping=TCGA.PAM50_genefu_hg18, type="label", side="in", col=c("black", "blue"), cex=0.4);
-circos(R=310, cir="hg18", W=50, mapping=cnv, col.v=4, type="ml3", B=TRUE, col=colors[7], cutoff=0, scale=TRUE);
-circos(R=150, cir="hg18", W=50, mapping=gene.exp, col.v=4, type="ml3", B=TRUE, col=colors[3], cutoff=0, scale=TRUE);
-circos(R=90,  cir="hg18", W=50, mapping=pvalue, col.v=4, type="l", B=FALSE, col=colors[1], scale=TRUE);
-circos(R=82, cir="hg18", W=50, mapping=TCGA.BC.fus, type="link", col=cols, lwd=2);
+circos(R=385, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr.label.h", cex=1.3);
+circos(R=350, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr.scale", lwd=0.001, cex=0.3);
+circos(R=345, cir=UCSC.hg18, mapping=UCSC.hg18.chr, type="chr2", W=10)
+circos(R=240, cir=UCSC.hg18, W=100, mapping=gene.exp,  col.v=4,  type="heatmap2", cluster=TRUE, col.bar=TRUE, lwd=0.01);
+circos(R=180, cir=UCSC.hg18, W=60,  mapping=cnv,   col.v=4,   type="ml3", B=FALSE, lwd=1, cutoff=0);
+circos(R=120, cir=UCSC.hg18, W=60,  mapping=pvalue,  col.v=4,    type="l",   B=TRUE, lwd=1, col=cols[1]);
+circos(R=120, cir=UCSC.hg18, W=10,  mapping=TCGA.BC.fus, type="link", lwd=2);
 
-dev.off();
+dev.off()
 
-#detach(package:OmicCircos, unload=TRUE)
+
+

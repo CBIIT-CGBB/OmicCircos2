@@ -1,79 +1,73 @@
 rm(list=ls());
 
-library(OmicCircos);
+library(OmicCircos3);
 options(stringsAsFactors = FALSE);
 
-data("TCGA.BC.fus");
-data("TCGA.BC.cnv.2k.60");
-data("TCGA.BC.gene.exp.2k.60");
-data("TCGA.BC.sample60");
+set.seed(1234);
 
-## gene expression data for PCA
-exp.m <- TCGA.BC.gene.exp.2k.60[,c(4:ncol(TCGA.BC.gene.exp.2k.60))];
+## load mm cytogenetic band data
+data("UCSC.mm10");
+data("UCSC.mm10.chr");
+ref     <- UCSC.mm10.chr;
+ref[,1] <- gsub("chr", "", ref[,1]);
+## initial values for simulation data 
+colors <- rainbow(10, alpha=0.8);
+lab.n  <- 50;
+cnv.n  <- 200;
+arc.n  <- 100;
+fus.n  <- 10;
 
-cnv   <- TCGA.BC.cnv.2k.60;
-
-## PCA
-type.n  <- unique(TCGA.BC.sample60[,2]);
-colors  <- rainbow(length(type.n), alpha=0.5);
-
-pca.col <- rep(NA, nrow(TCGA.BC.sample60));
-for (i in 1:length(type.n)){
-  n   <- type.n[i];
-  n.i <- which(TCGA.BC.sample60[,2] == n);
-  n.n <- TCGA.BC.sample60[n.i,1];
-  g.i <- which(colnames(exp.m) %in% n.n);
-  pca.col[g.i] <- colors[i];
+## make arc data
+arc.d <- c();
+for (i in 1:arc.n){
+  chr     <- sample(1:19, 1);
+  chr.i   <- which(ref[,1]==chr);
+  chr.arc <- ref[chr.i,];
+  arc.i   <- sample(1:nrow(chr.arc), 2);
+  arc.d   <- rbind(arc.d, c(chr.arc[arc.i[1],c(1,2)], chr.arc[arc.i[2],c(2,4)]));
 }
+colnames(arc.d) <- c("chr", "start", "end", "value");
 
-exp.m   <- na.omit(exp.m);
-pca.out <- prcomp(t(exp.m), scale = TRUE);
-
-## subtype cnv
-cnv.i <- c();
-for (i in 1:length(type.n)){
-  n     <- type.n[i];
-  n.i   <- which(TCGA.BC.sample60[,2] == n);
-  n.n   <- TCGA.BC.sample60[n.i,1];
-  cnv.i <- which(colnames(cnv) %in% n.n);
+## make fusion data
+fus.d <- c();
+for (i in 1:fus.n){
+  chr1    <- sample(1:19, 1);
+  chr2    <- sample(1:19, 1);
+  chr1.i  <- which(ref[,1]==chr1);
+  chr2.i  <- which(ref[,1]==chr2);
+  chr1.f  <- ref[chr1.i,];
+  chr2.f  <- ref[chr2.i,];
+  fus1.i  <- sample(1:nrow(chr1.f), 1);
+  fus2.i  <- sample(1:nrow(chr2.f), 1);
+  n1      <- paste0("geneA", i);
+  n2      <- paste0("geneB", i);
+  fus.d   <- rbind(fus.d, c(chr1.f[fus1.i,c(1,2)], n1, chr2.f[fus2.i,c(1,2)], n2));
 }
+colnames(fus.d) <- c("chr1", "po1", "gene1", "chr2", "po2", "gene2");
 
-## main
-pdf("OmicCircos4vignette8.pdf", 8,8);
-par(mar=c(5, 5, 5, 5));
+cnv.i <- sample(1:nrow(ref), cnv.n);
+vale  <- rnorm(cnv.n);
+cnv.d <- data.frame(ref[cnv.i,c(1,2)], value=vale);
+cnv.d[,1] <- paste0("chr", cnv.d[,1]);
+arc.d[,1] <- paste0("chr", arc.d[,1]);
+fus.d[,1] <- paste0("chr", fus.d[,1]);
+fus.d[,4] <- paste0("chr", fus.d[,4]);
 
-plot(c(1,800), c(1,800), type="n", axes=FALSE, xlab="", ylab="", main="");
+pdffile  <- "OmicCircos4vignette8.pdf";
+pdf(pdffile, 8, 8);
+par(mar=c(2, 2, 2, 2));
+plot(c(1,800), c(1,800), type="n", axes=F, xlab="", ylab="");
 
-legend(680,800, c("Basal","Her2","LumA","LumB"), pch=19, col=colors[c(2,4,1,3)], cex=0.5, 
-     title ="Gene Expression (PCA)", box.col="white");
+circos(R=385, cir=UCSC.mm10, mapping=UCSC.mm10.chr, type="chr.label.h", cex=1.4);
+circos(R=350, cir=UCSC.mm10, mapping=UCSC.mm10.chr, type="chr.scale", lwd=0.001, cex=0.2);
+circos(R=345, cir=UCSC.mm10, mapping=UCSC.mm10.chr, type="chr2", W=10)
 
-legend(5,800, c("1 Basal", "2 Her2", "3 LumA", "4 LumB", "(center)"), cex=0.5, 
-     title ="CNV (OmicCircos)", box.col="white");
+circos(R=300, cir=UCSC.mm10, W=40, mapping=cnv.d, type="b3", B=T, col=colors[7]);
+circos(R=300, cir=UCSC.mm10, W=40, mapping=cnv.d, type="s2", B=F, col=colors[1], cex=0.5);
 
-circos(xc=400, yc=400, R=390, cir="hg18", W=4,  type="chr", print.chr.lab=TRUE, scale=TRUE);
-R.v <- 330;
-for (i in 1:length(type.n)){
-  n     <- type.n[i];
-  n.i   <- which(TCGA.BC.sample60[,2] == n);
-  n.n   <- TCGA.BC.sample60[n.i,1];
-  cnv.i <- which(colnames(cnv) %in% n.n);
-  cnv.v <- cnv[,cnv.i];
-  cnv.v[cnv.v > 2]  <- 2;
-  cnv.v[cnv.v < -2] <- -2;
-  cnv.m <- cbind(cnv[,c(1:3)], cnv.v);
-  if (i%%2==1){
-    circos(xc=400, yc=400, R=R.v, cir="hg18", W=60, mapping=cnv.m, col.v=4,  
-           type="ml3", B=TRUE, lwd=1, cutoff=0, scale=TRUE);
-  } else {
-    circos(xc=400, yc=400, R=R.v, cir="hg18", W=60, mapping=cnv.m, col.v=4,  
-           type="ml3", B=FALSE, lwd=1, cutoff=0, scale=TRUE);
-  }
-  R.v <- R.v - 60;
-}
+circos(R=260, cir=UCSC.mm10, W=40, mapping=arc.d, type="arc2", B=F, col=colors, lwd=10);
+circos(R=220, cir=UCSC.mm10, W=40, mapping=cnv.d, col.v=3, type="b2", B=T, cutoff=-0.2, col=colors[c(7,9)], lwd=2);
+circos(R=180, cir=UCSC.mm10, W=40, mapping=arc.d, col.v=4, type="arc",  B=F, col=colors[c(1,7)], lwd=4, scale=T, cex=0.4);
+circos(R=150, cir=UCSC.mm10, W=10, mapping=fus.d, type="link",  lwd=2, col=colors[c(1,7,9)]);
 
-points(pca.out$x[,1]*6+410, pca.out$x[,2]*6+400, pch=19, col=pca.col, cex=2);
-
-dev.off() 
-
-## detach(package:OmicCircos, unload=TRUE)
-
+dev.off();

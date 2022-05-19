@@ -3,6 +3,6 @@ export (segAnglePo)
 export (sim.circos)
 importFrom("grDevices", "colorRampPalette", "rainbow")
 importFrom("graphics", "lines", "points", "polygon", "rect",
-             "segments", "text")
+             "segments", "text", "par", "strwidth")
 importFrom("stats", "dist", "end", "hclust", "median", "na.omit",
              "quantile", "rnorm", "sd", "start", "t.test", "var")

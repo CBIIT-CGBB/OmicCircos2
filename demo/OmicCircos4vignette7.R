@@ -1,6 +1,6 @@
 rm(list=ls());
 options(stringsAsFactors = FALSE);
-library(OmicCircos3);
+library(OmicCircos2);
 
 data(UCSC.hg18);
 data("TCGA.BC.fus");

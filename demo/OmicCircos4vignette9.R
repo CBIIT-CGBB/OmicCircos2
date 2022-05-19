@@ -1,6 +1,6 @@
 rm(list=ls());
 options(stringsAsFactors = FALSE);
-library(OmicCircos3);
+library(OmicCircos2);
 
 perm_list <- function (n, r, v = 1:n){ 
     if (r == 1) 

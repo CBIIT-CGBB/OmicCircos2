@@ -1,6 +1,6 @@
 rm(list=ls());
 
-library(OmicCircos3);
+library(OmicCircos2);
 options(stringsAsFactors = FALSE);
 
 set.seed(1234);

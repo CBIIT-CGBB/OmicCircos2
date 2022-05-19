@@ -1,7 +1,7 @@
 Package: OmicCircos2
 Type: Package
 Title: High-quality circular visualization of omics data
-Version: 0.1.0
+Version: 0.2.0
 Author: Ying Hu <yhu@mail.nih.gov> Chunhua Yan <yanch@mail.nih.gov>
 Maintainer: Ying Hu <yhu@mail.nih.gov>
 Depends: R (>= 2.14.0)
